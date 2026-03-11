@@ -2,7 +2,7 @@ using Visidata
 using TOML
 using Test
 
-const PROJECT          = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
+const PROJECT = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
 const VISIDATA_VERSION = PROJECT["visidata"]["version"]
 
 @testset "visidata_bin" begin

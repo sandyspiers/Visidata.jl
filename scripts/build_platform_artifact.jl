@@ -11,7 +11,8 @@ using Tar
 using Downloads: download
 using SHA
 
-const VISIDATA_VERSION = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))["visidata"]["version"]
+const VISIDATA_VERSION =
+    TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))["visidata"]["version"]
 
 const PYTHON_URLS = Dict(
     "linux" => "https://github.com/astral-sh/python-build-standalone/releases/download/20250818/cpython-3.13.7+20250818-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
@@ -34,13 +35,19 @@ rm("cpython.tar.gz")
 
 println("  pip install visidata==$VISIDATA_VERSION")
 if Sys.iswindows()
-    run(`$(joinpath(dir, "python.exe")) -m pip install --no-cache-dir visidata==$VISIDATA_VERSION`)
+    run(
+        `$(joinpath(dir, "python.exe")) -m pip install --no-cache-dir visidata==$VISIDATA_VERSION`,
+    )
     # pip's vd.exe hardcodes the build-time Python path — replace with a
     # .bat wrapper that locates Python relative to itself at runtime.
-    write(joinpath(dir, "Scripts", "vd.bat"),
-        "@echo off\r\n\"%~dp0\\..\\python.exe\" -m visidata %*\r\n")
+    write(
+        joinpath(dir, "Scripts", "vd.bat"),
+        "@echo off\r\n\"%~dp0\\..\\python.exe\" -m visidata %*\r\n",
+    )
 else
-    run(`$(joinpath(dir, "bin", "pip3")) install --no-cache-dir visidata==$VISIDATA_VERSION`)
+    run(
+        `$(joinpath(dir, "bin", "pip3")) install --no-cache-dir visidata==$VISIDATA_VERSION`,
+    )
     # Fix the pip-generated shebang — it hardcodes the build-time path.
     vd = joinpath(dir, "bin", "vd")
     write(vd, "#!/bin/sh\nexec \"\$(dirname \"\$0\")/python3.13\" -m visidata \"\$@\"\n")
@@ -50,11 +57,11 @@ end
 println("==> Archiving")
 uncompressed = tempname() * ".tar"
 Tar.create(dir, uncompressed)
-rm(dir, recursive=true)
+rm(dir, recursive = true)
 
 tree_hash_hex = open(Tar.tree_hash, uncompressed)
 open(TARBALL, "w") do out
-    run(pipeline(`gzip -9n -c $uncompressed`, stdout=out))
+    run(pipeline(`gzip -9n -c $uncompressed`, stdout = out))
 end
 rm(uncompressed)
 sha256_hex = open(io -> bytes2hex(sha256(io)), TARBALL)
