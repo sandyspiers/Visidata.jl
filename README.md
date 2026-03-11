@@ -2,7 +2,7 @@
 
 A Julia wrapper around [VisiData](https://www.visidata.org/), the terminal spreadsheet multitool.
 
-Visidata and its Python runtime are bundled as a Julia artifact.
+Visidata and its Python runtime are bundled as a Julia artifact
 
 ## Usage
 
