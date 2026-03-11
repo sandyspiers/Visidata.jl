@@ -2,6 +2,8 @@ module Visidata
 
 using Artifacts
 
+export visidata_bin, visidata
+
 """
     visidata_bin() -> String
 

@@ -14,5 +14,5 @@ using Test
 
     # Check it runs and reports the expected version
     out = readchomp(`$bin --version`)
-    @test contains(out, "visidata")
+    @test contains(out, "VisiData")
 end

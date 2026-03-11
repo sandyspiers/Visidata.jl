@@ -55,7 +55,17 @@ function build_linux()
         pip = joinpath(artifact_dir, "bin", "pip3")
         println("  pip install visidata==$VISIDATA_VERSION")
         run(`$pip install --no-cache-dir visidata==$VISIDATA_VERSION`)
-        @assert isfile(joinpath(artifact_dir, "bin", "vd"))
+
+        # Replace the pip-generated vd script: its shebang points to the
+        # temporary build-time artifact path, which won't exist at runtime.
+        # Use a portable wrapper that resolves python relative to itself.
+        vd = joinpath(artifact_dir, "bin", "vd")
+        @assert isfile(vd)
+        write(vd, """
+            #!/bin/sh
+            exec "\$(dirname "\$0")/python3.13" -m visidata "\$@"
+            """)
+        chmod(vd, 0o755)
     end
     return hash
 end

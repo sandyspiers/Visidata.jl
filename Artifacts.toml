@@ -1,0 +1,19 @@
+[[visidata]]
+arch = "x86_64"
+git-tree-sha1 = "a8e1ec7e3b4829eae380b41295742a3fa94c2fa4"
+lazy = true
+libc = "glibc"
+os = "linux"
+
+    [[visidata.download]]
+    sha256 = "d8953ef5caad67207043c0bddc6831a88a211d85c6564636df548676c1fd3218"
+    url = "https://github.com/sandyspiers/Visidata.jl/releases/download/v3.1.1/visidata-linux-x86_64.tar.gz"
+[[visidata]]
+arch = "x86_64"
+git-tree-sha1 = "b433c173573db84d0cd31e905371beb1fbd07743"
+lazy = true
+os = "windows"
+
+    [[visidata.download]]
+    sha256 = "cbcf73942f245d6a1bec9ff11c4665194c88b5cf859f0dc1ac6ab3e113c624b5"
+    url = "https://github.com/sandyspiers/Visidata.jl/releases/download/v3.1.1/visidata-windows-x86_64.tar.gz"
