@@ -7,16 +7,12 @@ using Test
     @test isfile(bin)
 
     @test if Sys.iswindows()
-        endswith(bin, "python.exe")
+        endswith(bin, "vd.exe")
     else
         endswith(bin, "vd")
     end
 
-    # Check visidata is installed and reports its version
-    out = if Sys.iswindows()
-        readchomp(`$bin -m visidata --version`)
-    else
-        readchomp(`$bin --version`)
-    end
+    # Check it runs and reports the expected visidata version
+    out = readchomp(`$bin --version`)
     @test contains(out, "VisiData")
 end

@@ -7,14 +7,14 @@ export visidata_bin, visidata
 """
     visidata_bin() -> String
 
-Return the path to the executable used to launch visidata.
-On Unix this is the `vd` shell script; on Windows it is `python.exe`
-(invoked as `python.exe -m visidata`).
+Return the path to the `vd` executable from the visidata artifact.
+On Unix this is `bin/vd`; on Windows it is `Scripts/vd.exe`, the console
+entry point created by pip — the same executable visidata installs normally.
 """
 function visidata_bin()
     art = artifact"visidata"
     bin = if Sys.iswindows()
-        joinpath(art, "python.exe")
+        joinpath(art, "Scripts", "vd.exe")
     else
         joinpath(art, "bin", "vd")
     end
@@ -28,12 +28,7 @@ end
 Launch visidata with the given file paths.
 """
 function visidata(files...)
-    cmd = if Sys.iswindows()
-        `$(visidata_bin()) -m visidata $files`
-    else
-        `$(visidata_bin()) $files`
-    end
-    run(cmd)
+    run(`$(visidata_bin()) $files`)
 end
 
 end # module Visidata
