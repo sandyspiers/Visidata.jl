@@ -9,9 +9,9 @@ Visidata and its Python runtime are bundled as a Julia artifact.
 ```julia
 using Visidata
 
-visidata("data.csv")                  # open one file
-visidata("a.csv", "b.csv")           # open multiple files
-visidata_bin()                        # path to the vd executable
+visidata("data.csv") # open one file
+visidata("a.csv", "b.csv") # open multiple files
+visidata_bin() # path to the vd executable
 ```
 
 ## Building the artifact
