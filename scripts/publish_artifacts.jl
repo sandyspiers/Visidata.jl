@@ -19,7 +19,7 @@
 #   julia scripts/publish_artifacts.jl
 
 using Pkg.Artifacts
-using Pkg.TOML
+using TOML
 
 const PROJECT       = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
 const VISIDATA_VERSION = PROJECT["visidata"]["version"]
