@@ -2,6 +2,8 @@
 # scripts/output/. Intended to run inside a CI matrix job (linux + windows)
 # so each platform is built natively — no cross-compilation.
 #
+# Reads the VisiData version from [visidata] version in Project.toml.
+#
 # Outputs (to GITHUB_OUTPUT if available, and stdout):
 #   tree-hash  — git-tree-sha1 of the artifact
 #   sha256     — sha256 of the tarball
@@ -10,21 +12,23 @@
 #   julia scripts/build_platform_artifact.jl
 
 using Pkg.Artifacts
+using Pkg.TOML
 using Downloads: download
 using SHA
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-const VISIDATA_VERSION = "3.1.1"   # ← bump this to upgrade
+const PROJECT = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
+const VISIDATA_VERSION = PROJECT["visidata"]["version"]
 
 const PYTHON_URLS = Dict(
     "linux"   => "https://github.com/astral-sh/python-build-standalone/releases/download/20250818/cpython-3.13.7+20250818-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
     "windows" => "https://github.com/astral-sh/python-build-standalone/releases/download/20250818/cpython-3.13.7+20250818-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
 )
 
-const PLATFORM   = Sys.iswindows() ? "windows" : "linux"
-const OUT_DIR    = joinpath(@__DIR__, "output")
-const TARBALL    = joinpath(OUT_DIR, "visidata-$PLATFORM-x86_64.tar.gz")
+const PLATFORM = Sys.iswindows() ? "windows" : "linux"
+const OUT_DIR  = joinpath(@__DIR__, "output")
+const TARBALL  = joinpath(OUT_DIR, "visidata-$PLATFORM-x86_64.tar.gz")
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 
@@ -43,6 +47,12 @@ function build()
             python = joinpath(dir, "python.exe")
             println("  pip install visidata==$VISIDATA_VERSION")
             run(`$python -m pip install --no-cache-dir visidata==$VISIDATA_VERSION`)
+
+            # pip's vd.exe has the build-time Python path hardcoded and breaks
+            # when the artifact is extracted elsewhere. Replace it with a .bat
+            # wrapper that locates Python relative to itself at runtime.
+            vd_bat = joinpath(dir, "Scripts", "vd.bat")
+            write(vd_bat, "@echo off\r\n\"%~dp0\\..\\python.exe\" -m visidata %*\r\n")
         else
             pip = joinpath(dir, "bin", "pip3")
             println("  pip install visidata==$VISIDATA_VERSION")
@@ -65,8 +75,8 @@ end
 println("==> Building $PLATFORM artifact  (visidata $VISIDATA_VERSION)")
 mkpath(OUT_DIR)
 
-hash         = build()
-tree_hash    = bytes2hex(hash.bytes)
+hash      = build()
+tree_hash = bytes2hex(hash.bytes)
 
 println("==> Archiving to $TARBALL")
 archive_artifact(hash, TARBALL)

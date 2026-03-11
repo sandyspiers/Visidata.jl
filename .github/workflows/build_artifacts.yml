@@ -60,12 +60,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: julia --project=. scripts/publish_artifacts.jl
 
+      - name: Get VisiData version
+        id: version
+        run: julia -e 'using Pkg.TOML; print("version=" * TOML.parsefile("Project.toml")["visidata"]["version"])' >> $GITHUB_OUTPUT
+
       - name: Commit Artifacts.toml
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Artifacts.toml
-          git commit -m "Update Artifacts.toml for visidata ${{ env.VISIDATA_VERSION }}"
+          git commit -m "Update Artifacts.toml for visidata ${{ steps.version.outputs.version }}"
           git push
-        env:
-          VISIDATA_VERSION: "3.1.1"

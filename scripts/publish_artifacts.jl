@@ -2,6 +2,8 @@
 # Run after both platform build jobs have completed and their outputs have been
 # downloaded into the working directory by actions/download-artifact.
 #
+# Reads the VisiData version from [visidata] version in Project.toml.
+#
 # Expected directory layout (created by download-artifact with path: artifacts/):
 #   artifacts/
 #     tarball-linux/
@@ -17,8 +19,10 @@
 #   julia scripts/publish_artifacts.jl
 
 using Pkg.Artifacts
+using Pkg.TOML
 
-const VISIDATA_VERSION = "3.1.1"   # ← keep in sync with build_platform_artifact.jl
+const PROJECT       = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
+const VISIDATA_VERSION = PROJECT["visidata"]["version"]
 const TAG           = "v$VISIDATA_VERSION"
 const REPO          = "sandyspiers/Visidata.jl"
 const ARTIFACT_NAME = "visidata"
@@ -35,8 +39,8 @@ struct PlatformArtifact
 end
 
 function load_platform(platform)
-    dir      = joinpath("artifacts", "tarball-$platform")
-    tarball  = joinpath(dir, "visidata-$platform-x86_64.tar.gz")
+    dir       = joinpath("artifacts", "tarball-$platform")
+    tarball   = joinpath(dir, "visidata-$platform-x86_64.tar.gz")
     tree_hash = Base.SHA1(hex2bytes(strip(read(joinpath(dir, "tree-hash.txt"), String))))
     sha256    = strip(read(joinpath(dir, "sha256.txt"), String))
     url       = "https://github.com/$REPO/releases/download/$TAG/visidata-$platform-x86_64.tar.gz"
@@ -67,7 +71,7 @@ for p in platforms
     bind_artifact!(ARTIFACT_TOML, ARTIFACT_NAME, p.tree_hash;
         platform      = platform_map[p.platform],
         download_info = [(p.url, p.sha256)],
-        lazy          = true,
+        lazy          = false,
         force         = true)
     println("  $(p.platform): $(p.url)  [$(p.sha256)]")
 end
