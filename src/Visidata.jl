@@ -1,6 +1,6 @@
 module Visidata
 
-using Artifacts
+using Artifacts, LazyArtifacts
 
 export visidata_bin, visidata
 
