@@ -1,79 +1,32 @@
 # Publishes visidata artifacts to a GitHub Release and writes Artifacts.toml.
-# Run after both platform build jobs have completed and their outputs have been
-# downloaded into the working directory by actions/download-artifact.
-#
-# Reads the VisiData version from [visidata] version in Project.toml.
-#
-# Expected directory layout (created by download-artifact with path: artifacts/):
-#   artifacts/
-#     tarball-linux/
-#       visidata-linux-x86_64.tar.gz
-#       tree-hash.txt
-#       sha256.txt
-#     tarball-windows/
-#       visidata-windows-x86_64.tar.gz
-#       tree-hash.txt
-#       sha256.txt
-#
-# Usage (from repo root):
+# Run after both platform build jobs have completed (from repo root):
 #   julia scripts/publish_artifacts.jl
 
 using Pkg.Artifacts
 using TOML
 
-const PROJECT       = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
-const VISIDATA_VERSION = PROJECT["visidata"]["version"]
+const VISIDATA_VERSION = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))["visidata"]["version"]
 const TAG           = "v$VISIDATA_VERSION"
 const REPO          = "sandyspiers/Visidata.jl"
-const ARTIFACT_NAME = "visidata"
 const ARTIFACT_TOML = joinpath(@__DIR__, "..", "Artifacts.toml")
 
-# ── Read build outputs ────────────────────────────────────────────────────────
-
-struct PlatformArtifact
-    platform  :: String
-    tarball   :: String
-    tree_hash :: Base.SHA1
-    sha256    :: String
-    url       :: String
-end
-
-function load_platform(platform)
-    dir       = joinpath("artifacts", "tarball-$platform")
-    tarball   = joinpath(dir, "visidata-$platform-x86_64.tar.gz")
-    tree_hash = Base.SHA1(hex2bytes(strip(read(joinpath(dir, "tree-hash.txt"), String))))
-    sha256    = strip(read(joinpath(dir, "sha256.txt"), String))
-    url       = "https://github.com/$REPO/releases/download/$TAG/visidata-$platform-x86_64.tar.gz"
-    return PlatformArtifact(platform, tarball, tree_hash, sha256, url)
-end
-
-platforms = [load_platform("linux"), load_platform("windows")]
-
-# ── GitHub Release ────────────────────────────────────────────────────────────
+# artifacts/ is populated by actions/download-artifact in the workflow:
+#   artifacts/tarball-linux/   — visidata-linux-x86_64.tar.gz, tree-hash.txt, sha256.txt
+#   artifacts/tarball-windows/ — visidata-windows-x86_64.tar.gz, tree-hash.txt, sha256.txt
 
 println("==> Creating GitHub Release $TAG")
 success(`gh release delete $TAG --repo $REPO --yes --cleanup-tag`)
 run(`gh release create $TAG --repo $REPO --title "visidata $VISIDATA_VERSION" --notes "Bundled visidata $VISIDATA_VERSION artifact."`)
-
-tarballs = [p.tarball for p in platforms]
-run(`gh release upload $TAG $tarballs --repo $REPO`)
-
-# ── Artifacts.toml ────────────────────────────────────────────────────────────
+run(`gh release upload $TAG $(["artifacts/tarball-$p/visidata-$p-x86_64.tar.gz" for p in ("linux","windows")]) --repo $REPO`)
 
 println("==> Writing Artifacts.toml")
-
-platform_map = Dict(
-    "linux"   => Base.BinaryPlatforms.Platform("x86_64", "linux"),
-    "windows" => Base.BinaryPlatforms.Platform("x86_64", "windows"),
-)
-
-for p in platforms
-    bind_artifact!(ARTIFACT_TOML, ARTIFACT_NAME, p.tree_hash;
-        platform      = platform_map[p.platform],
-        download_info = [(p.url, p.sha256)],
-        lazy          = false,
-        force         = true)
-    println("  $(p.platform): $(p.url)  [$(p.sha256)]")
+for (platform, os, extra) in [("linux", "linux", Dict("libc" => "glibc")), ("windows", "windows", Dict())]
+    dir  = "artifacts/tarball-$platform"
+    hash = Base.SHA1(hex2bytes(strip(read("$dir/tree-hash.txt", String))))
+    sha2 = strip(read("$dir/sha256.txt", String))
+    url  = "https://github.com/$REPO/releases/download/$TAG/visidata-$platform-x86_64.tar.gz"
+    plat = Base.BinaryPlatforms.Platform("x86_64", os; extra...)
+    bind_artifact!(ARTIFACT_TOML, "visidata", hash;
+        platform=plat, download_info=[(url, sha2)], lazy=false, force=true)
+    println("  $platform: $url  [$sha2]")
 end
-
-println("\nDone. Commit Artifacts.toml and push.")
