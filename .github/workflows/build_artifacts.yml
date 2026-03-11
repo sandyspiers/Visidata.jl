@@ -54,6 +54,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts/
+          run-id: ${{ github.run_id }}
 
       - name: Publish release and write Artifacts.toml
         env:
@@ -62,7 +63,7 @@ jobs:
 
       - name: Get VisiData version
         id: version
-        run: julia -e 'using Pkg.TOML; print("version=" * TOML.parsefile("Project.toml")["visidata"]["version"])' >> $GITHUB_OUTPUT
+        run: julia -e 'using TOML; print("version=" * TOML.parsefile("Project.toml")["visidata"]["version"])' >> $GITHUB_OUTPUT
 
       - name: Commit Artifacts.toml
         run: |
