@@ -77,8 +77,7 @@ rm(artifact_dir, recursive=true)
 
 # Compute git-tree-sha1 by reading the tar with Tar.tree_hash — the same
 # function Julia's artifact system uses when verifying a downloaded tarball.
-tree_hash_bytes = open(Tar.tree_hash, uncompressed)
-tree_hash_hex   = bytes2hex(tree_hash_bytes)
+tree_hash_hex = open(Tar.tree_hash, uncompressed)
 
 # Gzip-compress to produce the final tarball.
 open(TARBALL, "w") do out
