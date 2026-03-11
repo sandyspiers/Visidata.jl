@@ -1,0 +1,71 @@
+name: Build Artifacts
+
+on:
+  workflow_dispatch:  # trigger manually from the Actions tab
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+            -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - uses: julia-actions/cache@v2
+
+      - name: Build artifact
+        run: julia --project=. scripts/build_platform_artifact.jl
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarball-${{ matrix.platform }}
+          path: scripts/output/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # needed to push Artifacts.toml and create releases
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Publish release and write Artifacts.toml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: julia --project=. scripts/publish_artifacts.jl
+
+      - name: Commit Artifacts.toml
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Artifacts.toml
+          git commit -m "Update Artifacts.toml for visidata ${{ env.VISIDATA_VERSION }}"
+          git push
+        env:
+          VISIDATA_VERSION: "3.1.1"

@@ -16,9 +16,8 @@ visidata_bin()                        # path to the vd executable
 
 ## Building the artifact
 
-Artifacts are pre-built and committed to `Artifacts.toml`.
-Must have permissions to add repo releases, uses `gh`.
-
-```sh
-julia scripts/build_artifacts.jl
-```
+Artifacts are built natively per-platform and committed to `Artifacts.toml`.
+To rebuild, bump `VISIDATA_VERSION` in both `scripts/build_platform_artifact.jl`
+and `scripts/publish_artifacts.jl`, then trigger the **Build Artifacts** workflow
+from the Actions tab. It builds on Linux and Windows runners, publishes a GitHub
+Release, and commits the updated `Artifacts.toml` automatically.
