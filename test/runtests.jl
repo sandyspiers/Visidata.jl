@@ -1,5 +1,5 @@
 using Visidata
-using Pkg.TOML
+using TOML
 using Test
 
 const PROJECT          = TOML.parsefile(joinpath(@__DIR__, "..", "Project.toml"))
