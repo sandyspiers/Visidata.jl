@@ -20,7 +20,7 @@ run(`gh release create $TAG --repo $REPO --title "visidata $VISIDATA_VERSION" --
 run(`gh release upload $TAG $(["artifacts/tarball-$p/visidata-$p-x86_64.tar.gz" for p in ("linux","windows")]) --repo $REPO`)
 
 println("==> Writing Artifacts.toml")
-for (platform, os, extra) in [("linux", "linux", Dict("libc" => "glibc")), ("windows", "windows", Dict())]
+for (platform, os, extra) in [("linux", "linux", Dict(:libc => "glibc")), ("windows", "windows", Dict())]
     dir  = "artifacts/tarball-$platform"
     hash = Base.SHA1(hex2bytes(strip(read("$dir/tree-hash.txt", String))))
     sha2 = strip(read("$dir/sha256.txt", String))
